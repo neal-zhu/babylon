@@ -279,7 +279,7 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 	// So we have to hex BabylonSig before verifying the signature
 	bbnSigHex := hex.EncodeToString(msg)
 	if err := ecdsa.Verify(btcPK, bbnSigHex, btcSigRaw); err != nil {
-		return fmt.Errorf("failed to verify btcSigRaw")
+		return fmt.Errorf("failed to verify btcSigRaw %v", err)
 	}
 
 	return nil
