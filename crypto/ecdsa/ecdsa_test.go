@@ -1,0 +1,80 @@
+package ecdsa_test
+
+import (
+	"bytes"
+	"encoding/base64"
+	"encoding/hex"
+	"testing"
+
+	"github.com/babylonlabs-io/babylon/crypto/ecdsa"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/stretchr/testify/require"
+)
+
+const (
+	// test vector from https://github.com/okx/js-wallet-sdk/blob/a57c2acbe6ce917c0aa4e951d96c4e562ad58444/packages/coin-bitcoin/tests/btc.test.ts#L113-L126
+	skHex         = "adce25dc25ef89f06a722abdc4b601d706c9efc6bc84075355e6b96ca3871621"
+	testMsg       = "hello world"
+	testSigBase64 = "IDtG3XPLpiKOp4PjTzCo/ng8gm4MFTTyHeh/DaPC1XYsYaj5Jr4h8dnxmwuJtNkPkH40rEfnrrO8fgZKNOIF5iM="
+)
+
+func magicHash(msg string) chainhash.Hash {
+	buf := bytes.NewBuffer(nil)
+	// we have to use wire.WriteVarString which encodes the string length into the byte array in Bitcoin's own way
+	// message prefix
+	// NOTE: we have control over the buffer so errors should not happen
+	if err := wire.WriteVarString(buf, 0, ecdsa.MAGIC_MESSAGE_PREFIX); err != nil {
+		panic(err)
+	}
+	// message
+	if err := wire.WriteVarString(buf, 0, msg); err != nil {
+		panic(err)
+	}
+	bytes := buf.Bytes()
+
+	return chainhash.DoubleHashH(bytes)
+}
+
+func TestECDSA(t *testing.T) {
+	// decode SK and PK
+	skBytes, err := hex.DecodeString(skHex)
+	require.NoError(t, err)
+	sk, pk := btcec.PrivKeyFromBytes(skBytes)
+	require.NotNil(t, sk)
+	require.NotNil(t, pk)
+	t.Logf("%x\n", ecdsa.Sign(sk, testMsg))
+	// sign
+	sig := ecdsa.Sign(sk, testMsg)
+	testSigBytes, err := base64.StdEncoding.DecodeString(testSigBase64)
+	require.NoError(t, err)
+	// ensure sig is same as that in test vector
+	require.True(t, bytes.Equal(sig, testSigBytes))
+	// verify
+	err = ecdsa.Verify(pk, testMsg, sig)
+	require.NoError(t, err)
+}
+
+func TestECDSAMalleability(t *testing.T) {
+	// decode SK and PK
+	skBytes, err := hex.DecodeString(skHex)
+	require.NoError(t, err)
+	sk, pk := btcec.PrivKeyFromBytes(skBytes)
+	require.NotNil(t, sk)
+	require.NotNil(t, pk)
+	// sign
+	sig := ecdsa.Sign(sk, testMsg)
+	// verify
+	err = ecdsa.Verify(pk, testMsg, sig)
+	require.NoError(t, err)
+	// Modify signature
+	sig[0] = ((sig[0] - 27) ^ 1) + 27
+	var s btcec.ModNScalar
+	s.SetByteSlice(sig[33:65])
+	s.Negate()
+	s.PutBytesUnchecked(sig[33:65])
+	// Verify modified signature
+	err = ecdsa.Verify(pk, testMsg, sig)
+	require.Error(t, err)
+}
