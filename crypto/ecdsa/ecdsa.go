@@ -42,7 +42,7 @@ func Sign(sk *btcec.PrivateKey, msg string) []byte {
 func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
 	msgHash := magicHash(msg)
 	recoveredPK, _, err := ecdsa.RecoverCompact(sigBytes, msgHash[:])
-	fmt.Printf("msg %s, sig %v\n", msg, sigBytes)
+	fmt.Printf("msg %s, sig %v %x\n", msg, sigBytes, pk.SerializeCompressed(), recoveredPK.SerializeCompressed())
 	if err != nil {
 		return err
 	}
