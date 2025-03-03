@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 
+	_ "github.com/babylonlabs-io/babylon/app/params"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
