@@ -27,7 +27,7 @@ func main() {
 		fmt.Println("Error parsing:", err)
 		return
 	}
-	fmt.Printf("msg %s\n", msg.String())
+	fmt.Printf("parsedMsg: %+v\n", parsedMsg)
 
 	if err := parsedMsg.ParsedPop.Verify(parsedMsg.StakerAddress, parsedMsg.StakerPK.BIP340PubKey, &chaincfg.SigNetParams); err != nil {
 		fmt.Println("Error verifying:", err)
