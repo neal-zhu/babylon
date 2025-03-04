@@ -289,6 +289,7 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 // VerifyECDSA verifies the validity of PoP where Bitcoin signature is in ECDSA encoding
 // 1. verify(sig=sig_btc, pubkey=pk_btc, msg=addr)?
 func (pop *ProofOfPossessionBTC) VerifyECDSA(addr sdk.AccAddress, bip340PK *bbn.BIP340PubKey) error {
+	fmt.Printf("bbnAddress %s\n", addr.String())
 	return VerifyECDSA(pop.BtcSigType, pop.BtcSig, bip340PK, addr.Bytes())
 }
 
